@@ -16,11 +16,13 @@
       --card-inner: #0d1526;
       --border: #223249;
       --border-focus: #10b981;
+      --border-error: #ef4444;
       --text: #f8fafc;
       --muted: #94a3b8;
       --primary: #38bdf8;
       --accent: #10b981;
       --accent-hover: #059669;
+      --danger: #ef4444;
       --radius: 12px;
     }
     * {
@@ -97,12 +99,10 @@
       display: grid;
       grid-template-columns: 140px 1fr;
       gap: 10px;
-      margin-bottom: 1rem;
+      margin-bottom: 0.4rem;
     }
     @media (max-width: 460px) {
-      .phone-row {
-        grid-template-columns: 1fr;
-      }
+      .phone-row { grid-template-columns: 1fr; }
     }
     select, input[type="tel"], textarea {
       width: 100%;
@@ -113,10 +113,33 @@
       color: var(--text);
       font-size: 0.95rem;
       outline: none;
-      transition: border-color 0.15s ease;
+      transition: all 0.15s ease;
     }
     select:focus, input[type="tel"]:focus, textarea:focus {
       border-color: var(--border-focus);
+    }
+    input[type="tel"].input-error {
+      border-color: var(--border-error) !important;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+    }
+    .field-hint-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      min-height: 18px;
+    }
+    .error-msg {
+      font-size: 0.75rem;
+      color: var(--danger);
+      font-weight: 600;
+      display: none;
+    }
+    .digit-count {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: monospace;
+      margin-left: auto;
     }
     textarea {
       resize: vertical;
@@ -161,9 +184,7 @@
       gap: 8px;
       transition: background 0.15s ease;
     }
-    .btn-main:hover {
-      background: var(--accent-hover);
-    }
+    .btn-main:hover { background: var(--accent-hover); }
     .btn-sub {
       width: 100%;
       padding: 10px;
@@ -236,7 +257,6 @@
       color: var(--muted);
       font-size: 0.72rem;
     }
-    /* QR Code Display Container */
     #qrContainer {
       display: none;
       text-align: center;
@@ -246,14 +266,13 @@
       border: 1px solid var(--border);
       border-radius: 8px;
     }
-    #qrContainer svg, #qrContainer img {
+    #qrContainer img {
       margin: 0 auto;
       display: block;
       border-radius: 6px;
       background: #ffffff;
       padding: 8px;
     }
-    /* Ecosystem Section */
     .ecosystem-section {
       margin-top: 2rem;
       border-top: 1px solid var(--border);
@@ -296,7 +315,6 @@
       margin-bottom: 2px;
     }
     .eco-card span { font-size: 0.72rem; color: var(--muted); }
-    /* Footer */
     footer {
       text-align: center;
       margin-top: 2rem;
@@ -311,7 +329,6 @@
     }
     .footer-links a { color: var(--muted); text-decoration: none; }
     .footer-links a:hover { color: var(--accent); }
-    /* Toast */
     #toast {
       visibility: hidden;
       min-width: 200px;
@@ -375,7 +392,7 @@
       <div class="phone-row">
         <div>
           <label>Country Code</label>
-          <select id="countryCode">
+          <select id="countryCode" onchange="validateOnInput()">
             <option value="91" selected>🇮🇳 +91 (India)</option>
             <option value="1">🇺🇸 +1 (US/Canada)</option>
             <option value="44">🇬🇧 +44 (UK)</option>
@@ -389,8 +406,13 @@
         </div>
         <div>
           <label>Phone Number</label>
-          <input type="tel" id="phoneNumber" placeholder="Enter 10-digit number" autocomplete="off" autofocus>
+          <input type="tel" id="phoneNumber" placeholder="Enter 10-digit number" autocomplete="off" autofocus oninput="validateOnInput()">
         </div>
+      </div>
+
+      <div class="field-hint-bar">
+        <span id="errorMsg" class="error-msg">⚠️ Please enter a mobile number first.</span>
+        <span id="digitCount" class="digit-count">0/10 digits</span>
       </div>
 
       <label>Optional Pre-Filled Message</label>
@@ -403,11 +425,11 @@
         <span class="chip" onclick="setTemplate('Hello!')">👋 Simple Hello</span>
       </div>
 
-      <button class="btn-main" onclick="openWhatsApp()">
+      <button class="btn-main" type="button" onclick="openWhatsApp()">
         <span>💬 Open Direct WhatsApp Chat</span>
       </button>
 
-      <button class="btn-sub" onclick="generateQr()">
+      <button class="btn-sub" type="button" onclick="generateQr()">
         <span>📷 Generate Shareable QR Code</span>
       </button>
 
@@ -456,22 +478,99 @@
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       renderHistory();
+      validateOnInput();
     });
 
     function cleanNumber(input) {
       return input.replace(/[^0-9]/g, '');
     }
 
-    function getFullNumber() {
+    function getNormalizedNumber() {
       const code = document.getElementById('countryCode').value;
       let raw = cleanNumber(document.getElementById('phoneNumber').value);
 
+      // Strip leading zero if pasted (e.g., 09876543210 -> 9876543210)
       if (raw.startsWith('0')) {
         raw = raw.substring(1);
       }
-      if (raw.startsWith(code)) {
-        return raw;
+      // If user pasted with country code already (e.g. 919876543210 when 91 is chosen)
+      if (code === '91' && raw.length === 12 && raw.startsWith('91')) {
+        raw = raw.substring(2);
       }
+      return raw;
+    }
+
+    function validateOnInput() {
+      const code = document.getElementById('countryCode').value;
+      const raw = getNormalizedNumber();
+      const countEl = document.getElementById('digitCount');
+      const errEl = document.getElementById('errorMsg');
+      const inputEl = document.getElementById('phoneNumber');
+
+      if (code === '91') {
+        countEl.innerText = `${raw.length}/10 digits`;
+        if (raw.length === 10) {
+          countEl.style.color = '#10b981';
+          errEl.style.display = 'none';
+          inputEl.classList.remove('input-error');
+        } else {
+          countEl.style.color = '#94a3b8';
+        }
+      } else {
+        countEl.innerText = `${raw.length} digits`;
+        countEl.style.color = '#94a3b8';
+      }
+    }
+
+    function validateNumber() {
+      const code = document.getElementById('countryCode').value;
+      const raw = getNormalizedNumber();
+      const inputEl = document.getElementById('phoneNumber');
+      const errEl = document.getElementById('errorMsg');
+
+      // 1. Check if completely empty
+      if (!raw || raw.length === 0) {
+        inputEl.classList.add('input-error');
+        inputEl.focus();
+        errEl.innerText = '⚠️ Please enter a mobile number first.';
+        errEl.style.display = 'inline';
+        showToast('Please enter a mobile number first!');
+        return null;
+      }
+
+      // 2. Strict 10-digit validation for India (+91)
+      if (code === '91') {
+        if (raw.length < 10) {
+          inputEl.classList.add('input-error');
+          inputEl.focus();
+          const missing = 10 - raw.length;
+          errEl.innerText = `⚠️ Incomplete number: type full 10 digits (${missing} more needed).`;
+          errEl.style.display = 'inline';
+          showToast(`Please enter full 10 digits (${missing} missing)!`);
+          return null;
+        } else if (raw.length > 10) {
+          inputEl.classList.add('input-error');
+          inputEl.focus();
+          errEl.innerText = '⚠️ Too many digits: Indian numbers are exactly 10 digits.';
+          errEl.style.display = 'inline';
+          showToast('Indian numbers are exactly 10 digits!');
+          return null;
+        }
+      } else {
+        // International generic check (must be at least 7 digits)
+        if (raw.length < 7) {
+          inputEl.classList.add('input-error');
+          inputEl.focus();
+          errEl.innerText = '⚠️ Please enter a valid full phone number.';
+          errEl.style.display = 'inline';
+          showToast('Please enter a valid full phone number!');
+          return null;
+        }
+      }
+
+      // Valid: clear errors
+      inputEl.classList.remove('input-error');
+      errEl.style.display = 'none';
       return code + raw;
     }
 
@@ -480,14 +579,9 @@
     }
 
     function openWhatsApp() {
-      const numInput = document.getElementById('phoneNumber').value.trim();
-      const clean = cleanNumber(numInput);
-      if (!clean || clean.length < 5) {
-        alert('Please enter a valid phone number.');
-        return;
-      }
+      const fullNum = validateNumber();
+      if (!fullNum) return; // Stoppped until valid!
 
-      const fullNum = getFullNumber();
       const msg = encodeURIComponent(document.getElementById('messageText').value.trim());
       const waUrl = `https://wa.me/${fullNum}${msg ? '?text=' + msg : ''}`;
 
@@ -496,20 +590,15 @@
     }
 
     function generateQr() {
-      const numInput = document.getElementById('phoneNumber').value.trim();
-      const clean = cleanNumber(numInput);
-      if (!clean || clean.length < 5) {
-        alert('Please enter a phone number first.');
-        return;
-      }
-      const fullNum = getFullNumber();
+      const fullNum = validateNumber();
+      if (!fullNum) return; // Stoppped until valid!
+
       const msg = encodeURIComponent(document.getElementById('messageText').value.trim());
       const waUrl = `https://wa.me/${fullNum}${msg ? '?text=' + msg : ''}`;
 
       const qrContainer = document.getElementById('qrContainer');
       const qrOutput = document.getElementById('qrOutput');
 
-      // Use fast QR image service
       qrOutput.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(waUrl)}" alt="WhatsApp QR Code" width="180" height="180">`;
       qrContainer.style.display = 'block';
     }
@@ -553,11 +642,16 @@
       renderHistory();
     }
 
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.className = 'show';
+      setTimeout(() => { t.className = t.className.replace('show', ''); }, 2500);
+    }
+
     function copyLink() {
       navigator.clipboard.writeText(window.location.href).then(() => {
-        const t = document.getElementById('toast');
-        t.className = 'show';
-        setTimeout(() => { t.className = t.className.replace('show', ''); }, 2500);
+        showToast('Link copied to clipboard!');
       });
     }
   </script>
