@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Direct WhatsApp Chat Opener - Send Message Without Saving Number</title>
+  <meta name="description" content="Open WhatsApp chats instantly with unsaved phone numbers. 100% private, client-side, with country codes, quick business templates, and QR code generator.">
+
+  <!-- Dynamic SVG Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310b981'/%3E%3Cpath d='M16 6a10 10 0 0 0-8.6 15.1L6 26l5.1-1.3A10 10 0 1 0 16 6zm0 17.8c-1.5 0-2.9-.4-4.2-1.1l-.3-.2-3.1.8.8-3-.2-.3a7.8 7.8 0 1 1 7 3.8zm4.3-5.9c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8 1-.3.2-.5.1a6.6 6.6 0 0 1-3.2-2.8c-.2-.4.2-.4.7-1.3 0-.1 0-.3-.1-.4s-.5-1.3-.7-1.7c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3a3 3 0 0 0-.9 2.2c0 1.3 1 2.6 1.1 2.8.2.2 2 3.1 4.9 4.3 2.9 1.2 2.9.8 3.4.8.5 0 1.6-.7 1.8-1.3.2-.7.2-1.3.1-1.4-.1-.2-.3-.3-.5-.4z' fill='%23ffffff'/%3E%3C/svg%3E">
+
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #151f32;
+      --card-inner: #0d1526;
+      --border: #223249;
+      --border-focus: #10b981;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --radius: 12px;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .container {
+      width: 100%;
+      max-width: 650px;
+      margin: 0 auto;
+      padding: 1.25rem 1rem 3rem 1rem;
+    }
+    header { text-align: center; margin-bottom: 1.5rem; }
+    .brand-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0.6rem;
+    }
+    .brand-name {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .brand-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+    }
+    header h1 {
+      font-size: clamp(1.4rem, 3.5vw, 2rem);
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+    header p {
+      color: var(--muted);
+      font-size: clamp(0.85rem, 2vw, 0.95rem);
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.35rem;
+      margin-bottom: 1.25rem;
+    }
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .phone-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 460px) {
+      .phone-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    select, input[type="tel"], textarea {
+      width: 100%;
+      padding: 11px 12px;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    select:focus, input[type="tel"]:focus, textarea:focus {
+      border-color: var(--border-focus);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    .template-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 1.2rem;
+    }
+    .chip {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .chip:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-main {
+      width: 100%;
+      padding: 13px;
+      font-size: 1rem;
+      font-weight: 700;
+      background: var(--accent);
+      color: #052e16;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+    .btn-main:hover {
+      background: var(--accent-hover);
+    }
+    .btn-sub {
+      width: 100%;
+      padding: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: var(--card-inner);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-sub:hover {
+      color: #fff;
+      border-color: var(--muted);
+    }
+    .history-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .history-header h3 {
+      font-size: 0.95rem;
+      color: #fff;
+      font-weight: 700;
+    }
+    .clear-btn {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .history-item a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .history-item span {
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+    /* QR Code Display Container */
+    #qrContainer {
+      display: none;
+      text-align: center;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    #qrContainer svg, #qrContainer img {
+      margin: 0 auto;
+      display: block;
+      border-radius: 6px;
+      background: #ffffff;
+      padding: 8px;
+    }
+    /* Ecosystem Section */
+    .ecosystem-section {
+      margin-top: 2rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+    }
+    .ecosystem-section h3 {
+      font-size: 1rem;
+      color: #fff;
+      margin-bottom: 0.3rem;
+      text-align: center;
+    }
+    .ecosystem-section p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .eco-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 480px) {
+      .eco-grid { grid-template-columns: 1fr; }
+    }
+    .eco-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.15s ease;
+    }
+    .eco-card:hover { border-color: var(--accent); }
+    .eco-card strong {
+      display: block;
+      font-size: 0.88rem;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .eco-card span { font-size: 0.72rem; color: var(--muted); }
+    /* Footer */
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 0.5rem;
+    }
+    .footer-links a { color: var(--muted); text-decoration: none; }
+    .footer-links a:hover { color: var(--accent); }
+    /* Toast */
+    #toast {
+      visibility: hidden;
+      min-width: 200px;
+      background-color: var(--accent);
+      color: #052e16;
+      text-align: center;
+      border-radius: 6px;
+      padding: 10px 16px;
+      position: fixed;
+      z-index: 2000;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+    #toast.show {
+      visibility: visible;
+      animation: fadein 0.3s, fadeout 0.3s 2.2s;
+    }
+    @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 24px; opacity: 1; } }
+    @keyframes fadeout { from { bottom: 24px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+  </style>
+</head>
+<body>
+
+  <!-- GLOBAL NETWORK HEADER -->
+  <div id="quicktools-global-bar" style="background:#090d16; border-bottom:1px solid #1e293b; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; font-family:system-ui, -apple-system, sans-serif; font-size:13px; z-index:99999; position:relative; width:100%; box-sizing:border-box;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <a href="https://unknownuniversem-blip.github.io/" style="color:#f8fafc; font-weight:700; text-decoration:none; display:flex; align-items:center; gap:6px;">
+        <span style="background:#38bdf8; color:#0b1120; font-size:10px; font-weight:900; padding:2px 6px; border-radius:4px;">HUB</span>
+        <span>QuickTools</span>
+      </a>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px; overflow-x:auto;">
+      <a href="https://unknownuniversem-blip.github.io/wa-direct/" style="color:#10b981; text-decoration:none; font-weight:700; white-space:nowrap;">💬 WA Direct</a>
+      <span style="color:#334155;">|</span>
+      <a href="https://unknownuniversem-blip.github.io/exam-resizer/" style="color:#94a3b8; text-decoration:none; font-weight:600; white-space:nowrap;">📷 Exam Resizer</a>
+      <span style="color:#334155;">|</span>
+      <a href="https://unknownuniversem-blip.github.io/typing-speed-finger-test/" style="color:#94a3b8; text-decoration:none; font-weight:600; white-space:nowrap;">⌨ Typing Test</a>
+      <span style="color:#334155;">|</span>
+      <a href="https://unknownuniversem-blip.github.io/" style="color:#38bdf8; text-decoration:none; font-weight:600; white-space:nowrap;">✨ Hub</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <div class="brand-box">
+        <svg width="32" height="32" viewBox="0 0 32 32">
+          <rect width="32" height="32" rx="8" fill="#10b981"/>
+          <path d="M16 6a10 10 0 0 0-8.6 15.1L6 26l5.1-1.3A10 10 0 1 0 16 6zm0 17.8c-1.5 0-2.9-.4-4.2-1.1l-.3-.2-3.1.8.8-3-.2-.3a7.8 7.8 0 1 1 7 3.8zm4.3-5.9c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8 1-.3.2-.5.1a6.6 6.6 0 0 1-3.2-2.8c-.2-.4.2-.4.7-1.3 0-.1 0-.3-.1-.4s-.5-1.3-.7-1.7c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3a3 3 0 0 0-.9 2.2c0 1.3 1 2.6 1.1 2.8.2.2 2 3.1 4.9 4.3 2.9 1.2 2.9.8 3.4.8.5 0 1.6-.7 1.8-1.3.2-.7.2-1.3.1-1.4-.1-.2-.3-.3-.5-.4z" fill="#ffffff"/>
+        </svg>
+        <span class="brand-name">WADirect</span>
+        <span class="brand-badge">Zero Storage</span>
+      </div>
+      <h1>Direct WhatsApp Chat Opener</h1>
+      <p>Send messages on WhatsApp without saving numbers to your phone contacts.</p>
+    </header>
+
+    <div class="card">
+      <div class="phone-row">
+        <div>
+          <label>Country Code</label>
+          <select id="countryCode">
+            <option value="91" selected>🇮🇳 +91 (India)</option>
+            <option value="1">🇺🇸 +1 (US/Canada)</option>
+            <option value="44">🇬🇧 +44 (UK)</option>
+            <option value="971">🇦🇪 +971 (UAE)</option>
+            <option value="966">🇸🇦 +966 (Saudi)</option>
+            <option value="65">🇸🇬 +65 (Singapore)</option>
+            <option value="61">🇦🇺 +61 (Australia)</option>
+            <option value="880">🇧🇩 +880 (Bangladesh)</option>
+            <option value="977">🇳🇵 +977 (Nepal)</option>
+          </select>
+        </div>
+        <div>
+          <label>Phone Number</label>
+          <input type="tel" id="phoneNumber" placeholder="Enter 10-digit number" autocomplete="off" autofocus>
+        </div>
+      </div>
+
+      <label>Optional Pre-Filled Message</label>
+      <textarea id="messageText" placeholder="Type your message or pick a quick template below..."></textarea>
+
+      <div class="template-chips">
+        <span class="chip" onclick="setTemplate('Hi, I am contacting you regarding your listing.')">📋 Listing Inquiry</span>
+        <span class="chip" onclick="setTemplate('Please share the price and delivery details.')">💰 Price & Delivery</span>
+        <span class="chip" onclick="setTemplate('Hi, please send your live location.')">📍 Share Location</span>
+        <span class="chip" onclick="setTemplate('Hello!')">👋 Simple Hello</span>
+      </div>
+
+      <button class="btn-main" onclick="openWhatsApp()">
+        <span>💬 Open Direct WhatsApp Chat</span>
+      </button>
+
+      <button class="btn-sub" onclick="generateQr()">
+        <span>📷 Generate Shareable QR Code</span>
+      </button>
+
+      <div id="qrContainer">
+        <div style="font-size:0.75rem; color:var(--muted); margin-bottom:8px;">Scan with phone camera to start chat:</div>
+        <div id="qrOutput"></div>
+      </div>
+    </div>
+
+    <!-- LOCAL RECENT CHATS -->
+    <div class="history-card" id="historyBox" style="display:none;">
+      <div class="history-header">
+        <h3>Recent Unsaved Numbers (Stored in Browser)</h3>
+        <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <!-- CROSS PROMOTION -->
+    <div class="ecosystem-section">
+      <h3>More Zero-Cost Client-Side Utilities</h3>
+      <p>Discover fast, ad-free offline web tools built for speed and privacy.</p>
+      <div class="eco-grid">
+        <a href="https://unknownuniversem-blip.github.io/exam-resizer/" class="eco-card">
+          <strong>📷 Exam Photo Resizer</strong>
+          <span>NTA NEET, JEE, SSC & UPSC exact cm/pixel resizer & KB compressor.</span>
+        </a>
+        <a href="https://unknownuniversem-blip.github.io/typing-speed-finger-test/" class="eco-card">
+          <strong>⌨ Typing Speed Master</strong>
+          <span>Practice typing test with accuracy tracking for SSC CGL/CHSL.</span>
+        </a>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-links">
+        <a href="javascript:void(0)" onclick="alert('Privacy Guarantee: No phone numbers or message texts are ever sent to or stored on any server. Everything is opened directly using WhatsApp official wa.me API.')">Privacy Notice</a>
+        <a href="javascript:void(0)" onclick="copyLink()">Share Tool</a>
+      </div>
+      <div>100% Client-Side. Not affiliated with WhatsApp LLC.</div>
+    </footer>
+  </div>
+
+  <div id="toast">Link copied to clipboard!</div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      renderHistory();
+    });
+
+    function cleanNumber(input) {
+      return input.replace(/[^0-9]/g, '');
+    }
+
+    function getFullNumber() {
+      const code = document.getElementById('countryCode').value;
+      let raw = cleanNumber(document.getElementById('phoneNumber').value);
+
+      if (raw.startsWith('0')) {
+        raw = raw.substring(1);
+      }
+      if (raw.startsWith(code)) {
+        return raw;
+      }
+      return code + raw;
+    }
+
+    function setTemplate(msg) {
+      document.getElementById('messageText').value = msg;
+    }
+
+    function openWhatsApp() {
+      const numInput = document.getElementById('phoneNumber').value.trim();
+      const clean = cleanNumber(numInput);
+      if (!clean || clean.length < 5) {
+        alert('Please enter a valid phone number.');
+        return;
+      }
+
+      const fullNum = getFullNumber();
+      const msg = encodeURIComponent(document.getElementById('messageText').value.trim());
+      const waUrl = `https://wa.me/${fullNum}${msg ? '?text=' + msg : ''}`;
+
+      saveToHistory(fullNum);
+      window.open(waUrl, '_blank');
+    }
+
+    function generateQr() {
+      const numInput = document.getElementById('phoneNumber').value.trim();
+      const clean = cleanNumber(numInput);
+      if (!clean || clean.length < 5) {
+        alert('Please enter a phone number first.');
+        return;
+      }
+      const fullNum = getFullNumber();
+      const msg = encodeURIComponent(document.getElementById('messageText').value.trim());
+      const waUrl = `https://wa.me/${fullNum}${msg ? '?text=' + msg : ''}`;
+
+      const qrContainer = document.getElementById('qrContainer');
+      const qrOutput = document.getElementById('qrOutput');
+
+      // Use fast QR image service
+      qrOutput.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(waUrl)}" alt="WhatsApp QR Code" width="180" height="180">`;
+      qrContainer.style.display = 'block';
+    }
+
+    function saveToHistory(num) {
+      try {
+        let history = JSON.parse(localStorage.getItem('wa_recent_nums') || '[]');
+        history = history.filter(item => item !== num);
+        history.unshift(num);
+        if (history.length > 5) history.pop();
+        localStorage.setItem('wa_recent_nums', JSON.stringify(history));
+        renderHistory();
+      } catch (e) {}
+    }
+
+    function renderHistory() {
+      try {
+        const history = JSON.parse(localStorage.getItem('wa_recent_nums') || '[]');
+        const box = document.getElementById('historyBox');
+        const list = document.getElementById('historyList');
+        if (history.length === 0) {
+          box.style.display = 'none';
+          return;
+        }
+        list.innerHTML = '';
+        history.forEach(num => {
+          const item = document.createElement('div');
+          item.className = 'history-item';
+          item.innerHTML = `
+            <a href="https://wa.me/${num}" target="_blank">+${num}</a>
+            <span>Stored locally</span>
+          `;
+          list.appendChild(item);
+        });
+        box.style.display = 'block';
+      } catch (e) {}
+    }
+
+    function clearHistory() {
+      localStorage.removeItem('wa_recent_nums');
+      renderHistory();
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        const t = document.getElementById('toast');
+        t.className = 'show';
+        setTimeout(() => { t.className = t.className.replace('show', ''); }, 2500);
+      });
+    }
+  </script>
+</body>
+</html>
